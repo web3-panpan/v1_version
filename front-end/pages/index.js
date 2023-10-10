@@ -4,8 +4,8 @@ import { ethers } from 'ethers';
 
 function Home() {
 
-    const PERMITTOKENCONTRACT_ADDRESS = '0x895883c129383d7567a82c278b47296523598eD8';   // address of token
-    const SPENDERCONTRACT_ADDRESS = "0xb84F34C5e2c0706aC6a8D0D7da10bcA75FCcC1f4";  // 质押投票的合约地址
+    const PERMITTOKENCONTRACT_ADDRESS = '0x4b667B0E205CAdE9C8A6C57a7aCEdFFFF183EA67';   // address of token
+    const SPENDERCONTRACT_ADDRESS = "0xd58294b002eB80c50588ad796Af33627D9cF27ae";  // 质押投票的合约地址
 
     const permitTokenContractAbi = [
         "function name() view returns (string)",
@@ -34,6 +34,7 @@ function Home() {
         "function setVotingDuration(uint256 _proposalId, uint256 _durationInSeconds)",  // 设置投票的时间, 输入秒 
         "function votingEndTimes(uint256) view returns (uint256)",   //  返回的是block时间
         "function reclaimVotingRights(uint256 _proposalId, uint256 correctOptionId) public", // 重置投票， 以后可能会改成投票奖励余惩罚机制
+        "event ProposalAdded(uint256 indexed proposalId, string name)",
         "function proposalId() view returns (uint256)"  // 一共设置了多少个提案
         // 在这里添加其它必要的ABI项
     ];
@@ -204,7 +205,6 @@ function Home() {
                 return;
             }
 
-
             let used_vote = await contract.usedVotingRights(account);
             if (ethers.utils.parseEther(withdrawAmount).gt(accountValueInWei.sub(used_vote))) {
                 alert('在投票中， 投票的余额不能撤销！');
@@ -256,6 +256,12 @@ function Home() {
         console.log("正在增加提案： ", proposalText);
         const contract = new ethers.Contract(SPENDERCONTRACT_ADDRESS, spenderContractAbi, signer);
     
+        contract.on("ProposalAdded", (id, name, event) => {
+            console.log("New proposal added:");
+            console.log("ID:", id.toString());
+            console.log("Name:", name);
+        });
+
         try {
             const tx = await contract.addProposal(proposalText);
             await tx.wait();  // Wait for transaction to be mined

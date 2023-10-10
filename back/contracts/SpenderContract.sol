@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol"; 
 
 
-contract VotingContract is ReentrancyGuard,  Pausable,Ownable{
+contract VotingContract is ReentrancyGuard,  Pausable, Ownable{
 
     using SafeMath for uint256;  // 使用SafeMath库来避免溢出
 
@@ -22,6 +22,7 @@ contract VotingContract is ReentrancyGuard,  Pausable,Ownable{
     event Withdrawn(address indexed user, uint amount);
     event Voted(address indexed _address, uint256 indexed _proposalId, uint256 indexed _optionId);
     event OptionRemoved(uint256 indexed proposalId, uint256 indexed optionId);
+    event ProposalAdded(uint256 indexed proposalId, string name);
 
     mapping(uint256 => uint256) public votingEndTimes;  // 投票结束时间
     mapping(address => uint256) public balances;
@@ -56,6 +57,7 @@ contract VotingContract is ReentrancyGuard,  Pausable,Ownable{
     function addProposal(string memory _name) public onlyOwner {
         proposalId++;
         proposals[proposalId] = Proposal(proposalId, _name);
+        emit ProposalAdded(proposalId, _name);
     }
 
     // 添加选项到已存在的提案
@@ -175,7 +177,6 @@ contract VotingContract is ReentrancyGuard,  Pausable,Ownable{
             votingRecords[voter][_proposalId] = 0;
             voters[voter][_proposalId] = false;
         }
-
         // 处理投了错误选项的地址，你可以类似地遍历其他的`optionVoters[_proposalId][otherOptionId]`。
     }
 
