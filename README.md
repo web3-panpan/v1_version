@@ -1,15 +1,30 @@
 # v1_version
 the first version
 
-back 的代码：
+back
+1. Initialization:
 npm init --yes
+
+2. Install Development Dependencies:
+
 npm install --save-dev hardhat
+3. Run Hardhat:
+
 npx hardhat
-根据package.json 
-npm install   // 会根据package.json  自动安装依赖包
+4. Install Dependencies:
+npm install
+This will automatically install dependencies based on the package.json.
+
+5. Execute Deployment Script:
 npx hardhat run scripts/deploy.js --network goerli
 
-front 的代码：
-npm install  // 会根据package.json  自动安装依赖包
+Front
+1. Install Dependencies:
+npm install
+This will automatically install dependencies based on the package.json.
+
+2. Start the Development Server:
 npm run dev
-http://localhost:3000/#
+
+3. Access the Application:
+http://localhost:3000/
