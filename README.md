@@ -6,11 +6,11 @@ back
 npm init --yes
 
 2. Install Development Dependencies:
-
 npm install --save-dev hardhat
-3. Run Hardhat:
 
+3. Run Hardhat:
 npx hardhat
+
 4. Install Dependencies:
 npm install
 This will automatically install dependencies based on the package.json.
