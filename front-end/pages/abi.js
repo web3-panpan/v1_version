@@ -22,7 +22,9 @@ const spenderContractAbi = [
     "function optionsCount(uint256, uint256) view returns (uint256)",
     "function voters(address, uint256) view returns (bool)",
     "function usedVotingRights(address) view returns (uint256)",
+    "function getUserVotingHistory(address) view returns (uint256[],uint256[],uint256[])",
+
     "function votingRecords(address, uint256) view returns (uint256)",
-    "function owner()
+    "function owner();
 
 ];
