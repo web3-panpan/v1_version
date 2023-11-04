@@ -4,8 +4,8 @@ import { ethers } from 'ethers';
 
 function Home() {
 
-    const PERMITTOKENCONTRACT_ADDRESS = '0x4b667B0E205CAdE9C8A6C57a7aCEdFFFF183EA67';   // address of token
-    const SPENDERCONTRACT_ADDRESS = "0xd58294b002eB80c50588ad796Af33627D9cF27ae";  // 质押投票的合约地址
+    const PERMITTOKENCONTRACT_ADDRESS = '0x2638De6D7690343B5C0e868389Dd145422D8Be7A';   // address of token
+    const SPENDERCONTRACT_ADDRESS = "0x2d490946984b9b03f07e9D59bB882B77Eb07C663";  // 质押投票的合约地址
 
     const permitTokenContractAbi = [
         "function name() view returns (string)",
@@ -35,7 +35,9 @@ function Home() {
         "function votingEndTimes(uint256) view returns (uint256)",   //  返回的是block时间
         "function reclaimVotingRights(uint256 _proposalId, uint256 correctOptionId) public", // 重置投票， 以后可能会改成投票奖励余惩罚机制
         "event ProposalAdded(uint256 indexed proposalId, string name)",
-        "function proposalId() view returns (uint256)"  // 一共设置了多少个提案
+        "function proposalId() view returns (uint256)" , // 一共设置了多少个提案
+        "function getUserVotingHistory(address) view returns (uint256[],uint256[],uint256[])"
+
         // 在这里添加其它必要的ABI项
     ];
 
@@ -43,7 +45,7 @@ function Home() {
     const [account, setAccount] = useState();
     const [signer, setSigner] = useState();
     const [account_value, set_account_value] = useState();  // 当前账户在合约的余额
-    const [min_amount, set_minAmount] = useState("0.01");   
+    const [min_amount, set_minAmount] = useState("0.00001");   
     const [balance, setBalance] = useState();
     const [allowance, setAllowance] = useState();
     const [depositAmount, setDepositAmount] = useState("0"); // 初始化为字符串 "0"
@@ -66,6 +68,7 @@ function Home() {
     const [queryProposalID, setQueryProposalID] = useState('');  // 查询， 直接输入uint
     const [reclaimvote, setreclaimvotet] = useState("");
     const [reclaimvote_id, setreclaimvote_id] = useState("");
+    const [queryAccountAddress, setQueryAccountAddress] = useState("");
 
     // 点击按钮的时候登录
     const connectOnclick = async () => {
@@ -131,14 +134,19 @@ function Home() {
                 permitTokenContractAbi,
                 signer
             );
+            const balance = await permitTokenContract.balanceOf(account);
             const _amount = ethers.utils.parseEther(min_amount);
+            if (balance.lt(_amount)) {
+                alert("余额不足，无法授权这么多代币。");
+                return;
+            }
             const approvalTransaction = await permitTokenContract.approve(
                 SPENDERCONTRACT_ADDRESS,
                 _amount
             );
             await approvalTransaction.wait();
             const allowance = await permitTokenContract.allowance(account, SPENDERCONTRACT_ADDRESS);
-            if (!ethers.utils.formatEther(allowance)) {
+            if (allowance.lt(_amount)) {
                 alert("授权失败");
                 return;
             }
@@ -149,7 +157,6 @@ function Home() {
             alert("发生错误。请查看控制台以获取详细信息。");
         }
     };
-    
 
     const handleDeposit = async (depositAmount) => {
         console.log("handleDeposit 被调用，存款金额为: ", depositAmount);
@@ -417,8 +424,6 @@ function Home() {
             // 创建合约实例
             const contract = new ethers.Contract(SPENDERCONTRACT_ADDRESS, spenderContractAbi, signer);
             // 调用reclaimVotingRights函数
-            console.log('------',typeof(reclaimvote))
-
             const tx = await contract.reclaimVotingRights(reclaimvote, reclaimvote_id);
 
             // 等待交易被确认
@@ -431,6 +436,40 @@ function Home() {
 
         }
     };
+
+    const printUserVotingHistory = async (queryAccountAddress) => {
+        if (!signer) {
+            console.error("No signer found");
+            return;
+        }
+    
+        try {
+            // 创建合约实例
+
+            const contract = new ethers.Contract(SPENDERCONTRACT_ADDRESS, spenderContractAbi, signer);
+            // 调用合约方法获取用户的投票记录
+            console.error("Error fetching voting history:---------guigui");
+
+            const [proposalIds, optionIds, amounts] = await contract.getUserVotingHistory(queryAccountAddress);
+            // 检查三个数组的长度是否一致
+
+            if (!(proposalIds.length === optionIds.length && optionIds.length === amounts.length)) {
+                throw new Error('The returned arrays do not match in length');
+            }
+    
+            // 遍历每个投票记录
+            for (let i = 0; i < proposalIds.length; i++) {
+                // 输出每条投票记录的详细信息
+                console.log(`Proposal ID: ${proposalIds[i]}, Option ID: ${optionIds[i]}, Amount: ${ethers.utils.formatEther(amounts[i])} 票数`);
+            }
+        } catch (error) {
+            console.error("Error fetching voting history:", error);
+            // 根据错误类型给用户合适的反馈
+            alert("无法获取投票历史，请确保您连接了正确的网络并且合约地址及ABI是正确的。");
+        }
+    };
+    
+    
     
     
     
@@ -618,6 +657,19 @@ function Home() {
                     <div id="output" className="output">
                     </div>
                 </div>
+
+                <div className="proposal-info-section">
+                <h5>查询账户的投票记录</h5>
+                    <input
+                        className="input"
+                        type="text"
+                        value={queryAccountAddress}
+                        onChange={e => setQueryAccountAddress(e.target.value)}
+                        placeholder="输入账户地址"
+                    />
+                    <button className="button" onClick={() => {printUserVotingHistory(queryAccountAddress)}}>查询投票记录</button>
+                </div>
+
 
                 </div>
 

@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol"; 
 
-
 contract VotingContract is ReentrancyGuard,  Pausable, Ownable{
 
     using SafeMath for uint256;  // 使用SafeMath库来避免溢出
@@ -39,6 +38,16 @@ contract VotingContract is ReentrancyGuard,  Pausable, Ownable{
         string name;
         uint256 voteCount;
     }
+
+    // 投票记录的结构体
+    struct VoteRecord {
+        uint256 proposalId; // 提案ID
+        uint256 optionId;   // 用户选择的选项ID
+        uint256 amount;     // 投票数量
+    }
+
+    // 用户的投票历史记录映射
+    mapping(address => VoteRecord[]) public userVotingHistory;
 
     uint256 public proposalId;
     mapping(uint256 => uint256) public optionId;  // 输入提案的id 返回的option的长度
@@ -109,6 +118,8 @@ contract VotingContract is ReentrancyGuard,  Pausable, Ownable{
         votingRecords[msg.sender][_proposalId] = votingRecords[msg.sender][_proposalId].add(_amount);
         voters[msg.sender][_proposalId] = true;
         optionVoters[_proposalId][_optionId].push(msg.sender);
+
+        userVotingHistory[msg.sender].push(VoteRecord(_proposalId, _optionId, _amount));
         emit Voted(msg.sender, _proposalId, _optionId);
     }
 
@@ -179,6 +190,28 @@ contract VotingContract is ReentrancyGuard,  Pausable, Ownable{
         }
         // 处理投了错误选项的地址，你可以类似地遍历其他的`optionVoters[_proposalId][otherOptionId]`。
     }
+
+    function getUserVotingHistory(address _user)
+        public
+        view
+        returns (
+            uint256[] memory proposalIds,
+            uint256[] memory optionIds,
+            uint256[] memory amounts
+        )
+    {
+        VoteRecord[] storage records = userVotingHistory[_user];
+        proposalIds = new uint256[](records.length);
+        optionIds = new uint256[](records.length);
+        amounts = new uint256[](records.length);
+
+        for (uint256 i = 0; i < records.length; i++) {
+            proposalIds[i] = records[i].proposalId;
+            optionIds[i] = records[i].optionId;
+            amounts[i] = records[i].amount;
+        }
+    }
+     
 
     function pause() public onlyOwner {
         _pause();
